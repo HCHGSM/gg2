@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Smart POS & ERP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Cairo', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex border-r border-slate-800">
+        <div>
+            <div class="p-6 text-xl font-black text-white tracking-wide border-b border-slate-800 bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent">
+                Smart POS & ERP
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white font-bold shadow-lg shadow-sky-600/30">📊 لوحة التحكم</a>
+                <a href="/pos" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">💳 نقطة البيع (POS)</a>
+                <a href="/products" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">📦 المنتجات</a>
+                <a href="/inventory" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">🏭 المخزون</a>
+                <a href="/customers" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">👥 العملاء</a>
+                <a href="/suppliers" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">🚚 الموردين</a>
+                <a href="/expenses" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">📉 المصروفات</a>
+                <a href="/reports" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition">📈 التقارير</a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <a href="/logout" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition font-semibold text-sm">🚪 تسجيل الخروج</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-xs">
+            <h1 class="text-2xl font-extrabold text-slate-800">لوحة التحكم الرئيسية والتحليلات الحية</h1>
+            <div class="flex items-center gap-3">
+                <span class="bg-sky-100 text-sky-700 px-4 py-1.5 rounded-full text-sm font-bold">👤 {{ user.full_name }}</span>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <div class="p-8 space-y-8 flex-1">
+            <!-- Stats Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Sales Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-r-4 border-r-blue-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">إجمالي المبيعات</p>
+                    <h3 class="text-2xl font-black text-blue-600 mt-2">{{ "{:,.2f}".format(stats.total_sales) }} ج.س</h3>
+                </div>
+                <!-- Profit Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-r-4 border-r-emerald-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">صافي الأرباح</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-2">{{ "{:,.2f}".format(stats.net_profit) }} ج.س</h3>
+                </div>
+                <!-- Purchases Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-r-4 border-r-amber-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">إجمالي المشتريات</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-2">{{ "{:,.2f}".format(stats.total_purchases) }} ج.س</h3>
+                </div>
+                <!-- Expenses Card -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-r-4 border-r-rose-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">إجمالي المصروفات</p>
+                    <h3 class="text-2xl font-black text-rose-600 mt-2">{{ "{:,.2f}".format(stats.total_expenses) }} ج.س</h3>
+                </div>
+            </div>
+
+            <!-- Secondary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-slate-500">إجمالي المنتجات</p>
+                        <h4 class="text-xl font-extrabold text-slate-800 mt-1">{{ stats.products_count }}</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold">📦</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-slate-500">إجمالي العملاء</p>
+                        <h4 class="text-xl font-extrabold text-slate-800 mt-1">{{ stats.customers_count }}</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center text-xl font-bold">👥</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-slate-500">تنبيهات نقص المخزون</p>
+                        <h4 class="text-xl font-extrabold text-orange-600 mt-1">{{ stats.low_stock_count }}</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl font-bold">⚠️</div>
+                </div>
+            </div>
+
+            <!-- Recent Sales Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100">
+                    <h3 class="text-lg font-extrabold text-slate-800">أحدث فواتير المبيعات المسجلة</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+                                <th class="p-4">رقم الفاتورة</th>
+                                <th class="p-4">العميل</th>
+                                <th class="p-4">الإجمالي النهائي</th>
+                                <th class="p-4">المبلغ المدفوع</th>
+                                <th class="p-4">طريقة الدفع</th>
+                                <th class="p-4">التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
+                            {% for sale in recent_sales %}
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="p-4 font-bold text-sky-600">{{ sale.invoice_number }}</td>
+                                <td class="p-4">{{ sale.customer_id or "عميل نقدي" }}</td>
+                                <td class="p-4 font-bold">{{ "{:,.2f}".format(sale.total) }} ج.س</td>
+                                <td class="p-4">{{ "{:,.2f}".format(sale.paid_amount) }} ج.س</td>
+                                <td class="p-4"><span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold">{{ sale.payment_method }}</span></td>
+                                <td class="p-4 text-slate-400 text-xs">{{ sale.created_at }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-slate-400">لا توجد مبيعات مسجلة حتى الآن</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
