@@ -4,7 +4,13 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from .models import Base, Role, Permission, User, Account, Warehouse, Setting
 import bcrypt
 
-DB_PATH = os.path.expanduser('~/pos_erp.db')
+# DB location is configurable via POS_ERP_DB_PATH (useful for tests / packaging).
+# Default: a project-local data/ directory, NOT the user's home directory, so the
+# database file is always where a developer inspecting the repo expects it to be.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEFAULT_DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'pos_erp.db')
+DB_PATH = os.environ.get('POS_ERP_DB_PATH', DEFAULT_DB_PATH)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(DATABASE_URL, echo=False, future=True)

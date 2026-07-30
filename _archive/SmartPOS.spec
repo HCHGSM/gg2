@@ -1,6 +1,4 @@
 # -*- mode: python ; coding: utf-8 -*-
-# NOTE: minimal working spec targeting the canonical desktop entry point (main.py).
-# Icons, versioning, and full build hardening are addressed in Phase 9 (Packaging).
 
 block_cipher = None
 
@@ -9,7 +7,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=['bcrypt', 'sqlite3'],
+    hiddenimports=['bcrypt', 'sqlalchemy.ext.baked', 'openpyxl', 'reportlab'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -35,7 +33,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False, # Set to True if you want a terminal window for debugging
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

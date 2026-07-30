@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Databases (runtime state, never source-controlled)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Backups
+pos_backups/
+
+# Build output
+build/
+dist/
+*.spec.bak
+
+# Environment / secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Uploaded runtime files (user-generated content, not source)
+uploads/*
+!uploads/.gitkeep

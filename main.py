@@ -1,4 +1,5 @@
 import sys
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 from pos_erp.database.db import init_db
 from pos_erp.ui.login_window import LoginWindow
@@ -9,7 +10,7 @@ def main():
     init_db()
 
     app = QApplication(sys.argv)
-    app.setLayoutDirection(sys.Qt.RightToLeft)
+    app.setLayoutDirection(Qt.RightToLeft)
 
     main_window = None
 
