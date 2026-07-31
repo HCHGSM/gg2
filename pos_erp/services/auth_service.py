@@ -8,12 +8,19 @@ class AuthService:
     def authenticate(username, password):
         session = SessionLocal()
         try:
+            # Same generic message is used for "no such user" and "wrong password"
+            # below on purpose: giving a different message for each lets an
+            # attacker enumerate valid usernames.
+            generic_error = "اسم المستخدم أو كلمة المرور غير صحيحة"
+
             user = session.query(User).filter_by(username=username).first()
             if not user:
-                return None, "اسم المستخدم غير موجود"
+                return None, generic_error
             if not user.is_active:
+                # Account-disabled is intentionally distinguishable: it's shown
+                # only to someone who already knows a valid, correct password.
                 return None, "الحساب معطل، يرجى مراجعة الإدارة"
-            
+
             if bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
                 user.last_login = datetime.utcnow()
                 session.commit()
@@ -23,7 +30,7 @@ class AuthService:
                 session.commit()
                 return user, "تم تسجيل الدخول بنجاح"
             else:
-                return None, "كلمة المرور غير صحيحة"
+                return None, generic_error
         except Exception as e:
             return None, f"خطأ في المصادقة: {str(e)}"
         finally:

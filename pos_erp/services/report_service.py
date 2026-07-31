@@ -3,6 +3,7 @@ from datetime import datetime
 import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from sqlalchemy import func
 from pos_erp.database.db import SessionLocal
 from pos_erp.database.models import Sale, Purchase, Expense, Revenue, Product, Customer, Supplier
 
@@ -11,11 +12,14 @@ class ReportService:
     def get_dashboard_stats():
         session = SessionLocal()
         try:
-            total_sales = sum(s.total for s in session.query(Sale).filter_by(status='COMPLETED').all())
-            total_purchases = sum(p.total for p in session.query(Purchase).filter_by(status='COMPLETED').all())
-            total_expenses = sum(e.amount for e in session.query(Expense).all())
-            total_revenues = sum(r.amount for r in session.query(Revenue).all())
-            
+            # Aggregate with SQL (func.sum) instead of loading every row into
+            # Python and summing in memory — this used to load the entire
+            # sales/purchases/expenses/revenues tables on every dashboard view.
+            total_sales = session.query(func.coalesce(func.sum(Sale.total), 0.0)).filter_by(status='COMPLETED').scalar()
+            total_purchases = session.query(func.coalesce(func.sum(Purchase.total), 0.0)).filter_by(status='COMPLETED').scalar()
+            total_expenses = session.query(func.coalesce(func.sum(Expense.amount), 0.0)).scalar()
+            total_revenues = session.query(func.coalesce(func.sum(Revenue.amount), 0.0)).scalar()
+
             customers_count = session.query(Customer).count()
             suppliers_count = session.query(Supplier).count()
             products_count = session.query(Product).count()

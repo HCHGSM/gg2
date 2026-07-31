@@ -33,7 +33,10 @@ class Role(Base):
     description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    users = relationship('User', back_populates='role', cascade='all, delete-orphan')
+    # NOTE: no cascade delete here on purpose — deleting a Role must never
+    # silently delete the Users assigned to it. Role deletion/reassignment
+    # is handled explicitly at the service layer.
+    users = relationship('User', back_populates='role')
     permissions = relationship('Permission', secondary='role_permissions', back_populates='roles')
 
     def __repr__(self):
@@ -180,8 +183,8 @@ class InventoryMovement(Base):
     """Audit log for all stock ins, outs, transfers, and physical inventory counts."""
     __tablename__ = 'inventory_movements'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'), nullable=False)
-    warehouse_id = Column(Integer, ForeignKey('warehouses.id'), nullable=True)
+    product_id = Column(Integer, ForeignKey('products.id', ondelete='CASCADE'), nullable=False, index=True)
+    warehouse_id = Column(Integer, ForeignKey('warehouses.id'), nullable=True, index=True)
     movement_type = Column(String(30), nullable=False) # 'IN', 'OUT', 'TRANSFER', 'ADJUSTMENT'
     quantity = Column(Float, nullable=False)
     unit_cost = Column(Float, default=0.0)
@@ -222,8 +225,8 @@ class SaleItem(Base):
     """Line items for sales invoices."""
     __tablename__ = 'sale_items'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    sale_id = Column(Integer, ForeignKey('sales.id', ondelete='CASCADE'), nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    sale_id = Column(Integer, ForeignKey('sales.id', ondelete='CASCADE'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False, index=True)
     quantity = Column(Float, nullable=False)
     unit_price = Column(Float, nullable=False)
     discount = Column(Float, default=0.0)
@@ -257,8 +260,8 @@ class PurchaseItem(Base):
     """Line items for purchase orders."""
     __tablename__ = 'purchase_items'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='CASCADE'), nullable=False)
-    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='CASCADE'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False, index=True)
     quantity = Column(Float, nullable=False)
     unit_price = Column(Float, nullable=False)
     total = Column(Float, nullable=False)
@@ -304,7 +307,7 @@ class Transaction(Base):
     """General ledger journal entries and account transactions."""
     __tablename__ = 'transactions'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey('accounts.id'), nullable=False)
+    account_id = Column(Integer, ForeignKey('accounts.id'), nullable=False, index=True)
     transaction_type = Column(String(30), nullable=False) # 'DEPOSIT', 'WITHDRAWAL', 'TRANSFER'
     amount = Column(Float, nullable=False)
     reference = Column(String(100), nullable=True)

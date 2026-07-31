@@ -35,7 +35,12 @@ def seed_initial_data():
         # Check if default admin user exists
         if session.query(User).count() == 0:
             admin_role = session.query(Role).filter_by(name='Admin').first()
-            hashed_pwd = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            # Default password can be overridden via POS_ERP_ADMIN_PASSWORD (env var)
+            # instead of being fixed in source. Still defaults to 'admin123' for a
+            # frictionless first run, but every fresh install should change it
+            # immediately after first login (enforced by a UI prompt — see users_view).
+            default_admin_pwd = os.environ.get('POS_ERP_ADMIN_PASSWORD', 'admin123')
+            hashed_pwd = bcrypt.hashpw(default_admin_pwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             admin_user = User(
                 username='admin',
                 email='admin@pos.com',
