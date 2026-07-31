@@ -55,8 +55,8 @@ class CustomersView(QWidget):
         session = SessionLocal()
         try:
             customers = session.query(Customer).all()
-            self.table.setRowCount(0)
-        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
+            self.table.setRowCount(0) # Clear previous rows to prevent leaks
+            Animations.pop_in(self.table, 500)
             self.table.setRowCount(len(customers))
             for row, c in enumerate(customers):
                 self.table.setItem(row, 0, QTableWidgetItem(c.name))

@@ -224,3 +224,17 @@ class MainWindow(QMainWindow):
         self.new_main = MainWindow(user)
         self.new_main.show()
         self.login_win.close()
+
+    def toggle_language(self):
+        from pos_erp.utils.i18n import I18n
+        from pos_erp.ui.animations import ToastManager
+        
+        new_lang = I18n.toggle_language()
+        self.lang_btn.setText("AR" if new_lang == "en" else "EN")
+        
+        # Reload Main Window to apply translation
+        ToastManager.show_info(self, "Language changed. Reloading UI...")
+        self.new_main = MainWindow(self.current_user)
+        self.new_main.show()
+        self.close()
+        

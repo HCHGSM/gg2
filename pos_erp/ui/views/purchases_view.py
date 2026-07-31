@@ -50,8 +50,8 @@ class PurchasesView(QWidget):
         session = SessionLocal()
         try:
             purchases = session.query(Purchase).all()
-            self.table.setRowCount(0)
-        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
+            self.table.setRowCount(0) # Clear previous rows to prevent leaks
+            Animations.pop_in(self.table, 500)
             self.table.setRowCount(len(purchases))
             for row, p in enumerate(purchases):
                 self.table.setItem(row, 0, QTableWidgetItem(p.invoice_number))

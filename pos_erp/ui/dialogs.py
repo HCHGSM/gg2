@@ -15,7 +15,7 @@ class ModernDialog(QDialog):
         main_layout.setContentsMargins(0, 0, 0, 0)
         
         self.card = QFrame()
-        self.card.setStyleSheet("background-color: #18181B; border: 1px solid #3F3F46; border-radius: 16px;")
+        self.card.setObjectName("Card")
         Animations.apply_soft_shadow(self.card)
         card_layout = QVBoxLayout(self.card)
         card_layout.setContentsMargins(25, 25, 25, 25)
@@ -24,14 +24,15 @@ class ModernDialog(QDialog):
         # Header
         header_layout = QHBoxLayout()
         title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 20px; font-weight: bold; color: #FFFFFF; background: transparent; border: none;")
+        title_lbl.setProperty("cssClass", "view-title")
+        title_lbl.setStyleSheet("font-size: 20px; background: transparent; border: none;")
         header_layout.addWidget(title_lbl)
         header_layout.addStretch()
         
         close_btn = QPushButton("✕")
         close_btn.setFixedSize(30, 30)
         close_btn.setCursor(Qt.PointingHandCursor)
-        close_btn.setStyleSheet("background-color: transparent; border: none; color: #A1A1AA; font-size: 16px;")
+        close_btn.setStyleSheet("background-color: transparent; border: none; font-size: 18px; font-weight: bold;")
         close_btn.clicked.connect(self.reject)
         header_layout.addWidget(close_btn)
         
@@ -47,6 +48,7 @@ class ModernDialog(QDialog):
         self.form_layout = QFormLayout(self.form_container)
         self.form_layout.setSpacing(15)
         self.form_layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         self.scroll.setWidget(self.form_container)
         
         card_layout.addWidget(self.scroll)
@@ -77,7 +79,8 @@ class ModernDialog(QDialog):
     def add_input(self, name, label, widget):
         widget.setObjectName(name)
         lbl = QLabel(label)
-        lbl.setStyleSheet("color: #A1A1AA; font-weight: 600; background: transparent; border: none;")
+        lbl.setProperty("cssClass", "card-title")
+        lbl.setStyleSheet("background: transparent; border: none;")
         self.form_layout.addRow(lbl, widget)
 
     def get_data(self):

@@ -41,8 +41,8 @@ class UsersView(QWidget):
         session = SessionLocal()
         try:
             users = session.query(User).all()
-            self.table.setRowCount(0)
-        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
+            self.table.setRowCount(0) # Clear previous rows to prevent leaks
+            Animations.pop_in(self.table, 500)
             self.table.setRowCount(len(users))
             for row, u in enumerate(users):
                 self.table.setItem(row, 0, QTableWidgetItem(u.username))

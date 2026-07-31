@@ -38,8 +38,8 @@ class AccountsView(QWidget):
 
     def load_data(self):
         accounts = FinanceService.get_accounts()
-        self.table.setRowCount(0)
-        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
+        self.table.setRowCount(0) # Clear previous rows to prevent leaks
+            Animations.pop_in(self.table, 500)
         self.table.setRowCount(len(accounts))
         for row, a in enumerate(accounts):
             self.table.setItem(row, 0, QTableWidgetItem(a.name))
