@@ -1,11 +1,20 @@
 import os
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QVariantAnimation, QSequentialAnimationGroup, QParallelAnimationGroup, QPoint, QRectF
-from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsDropShadowEffect, QProgressBar, QFrame, QGraphicsBlurEffect
-from PySide6.QtGui import QColor, QPainter
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsDropShadowEffect, QProgressBar, QFrame
+from PySide6.QtGui import QColor, QPainter, QPainterPath
+import random
+
+# Global setting, could be linked to DB Setting table in future
+ANIMATION_LEVEL = "HIGH" 
 
 class Animations:
     @staticmethod
+    def _is_enabled():
+        return ANIMATION_LEVEL != "OFF"
+
+    @staticmethod
     def apply_glow(widget, color="#6366F1", radius=30, alpha=80):
+        if not Animations._is_enabled(): return
         shadow = QGraphicsDropShadowEffect(widget)
         shadow.setBlurRadius(radius)
         shadow.setColor(QColor(QColor(color).red(), QColor(color).green(), QColor(color).blue(), alpha))
@@ -14,6 +23,7 @@ class Animations:
 
     @staticmethod
     def apply_soft_shadow(widget):
+        if not Animations._is_enabled(): return
         shadow = QGraphicsDropShadowEffect(widget)
         shadow.setBlurRadius(40)
         shadow.setColor(QColor(0, 0, 0, 80))
@@ -22,6 +32,10 @@ class Animations:
 
     @staticmethod
     def fade_in(widget, duration=600, easing=QEasingCurve.OutCubic, delay=0):
+        if not Animations._is_enabled():
+            widget.show()
+            return
+            
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         
@@ -41,6 +55,10 @@ class Animations:
 
     @staticmethod
     def fade_out(widget, duration=400, on_finished=None):
+        if not Animations._is_enabled():
+            if on_finished: on_finished()
+            return
+            
         effect = QGraphicsOpacityEffect(widget)
         widget.setGraphicsEffect(effect)
         anim = QPropertyAnimation(effect, b"opacity")
@@ -55,6 +73,10 @@ class Animations:
 
     @staticmethod
     def pop_in(widget, duration=600, delay=0):
+        if not Animations._is_enabled():
+            widget.show()
+            return
+            
         effect = QGraphicsOpacityEffect(widget)
         effect.setOpacity(0)
         widget.setGraphicsEffect(effect)
@@ -85,6 +107,11 @@ class Animations:
 
     @staticmethod
     def count_number(label, start_val, end_val, is_float=True, prefix="", suffix="", duration=1500):
+        if not Animations._is_enabled():
+            if is_float: label.setText(f"{prefix}{end_val:,.2f}{suffix}")
+            else: label.setText(f"{prefix}{int(end_val)}{suffix}")
+            return
+            
         anim = QVariantAnimation(label)
         anim.setDuration(duration)
         anim.setStartValue(float(start_val))
@@ -103,6 +130,10 @@ class Animations:
 
     @staticmethod
     def slide_in(widget, start_pos, end_pos, duration=500):
+        if not Animations._is_enabled():
+            widget.move(end_pos)
+            return
+            
         anim = QPropertyAnimation(widget, b"pos")
         anim.setDuration(duration)
         anim.setStartValue(start_pos)
@@ -113,6 +144,9 @@ class Animations:
 
     @staticmethod
     def fly_to_cart(parent_widget, start_pos, end_pos, text):
+        if not Animations._is_enabled():
+            return
+            
         fly_widget = QFrame(parent_widget)
         fly_widget.setFixedSize(140, 45)
         fly_widget.move(start_pos)
@@ -159,6 +193,9 @@ class Animations:
 
     @staticmethod
     def shake(widget):
+        if not Animations._is_enabled():
+            return
+            
         anim = QPropertyAnimation(widget, b"pos")
         anim.setDuration(500)
         pos = widget.pos()
@@ -184,7 +221,7 @@ class Toast(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         frame = QFrame()
-        frame.setStyleSheet(f"background-color: rgba(24, 24, 27, 0.9); border: 1px solid {color}; border-radius: 14px;")
+        frame.setStyleSheet(f"background-color: rgba(24, 24, 27, 0.95); border: 1px solid {color}; border-radius: 14px;")
         Animations.apply_glow(frame, color, 40, 70)
         
         h_layout = QHBoxLayout(frame)
@@ -209,6 +246,11 @@ class Toast(QWidget):
         self.move(x, y + 60)
         self.show()
         
+        if not Animations._is_enabled():
+            self.move(x, y)
+            QTimer.singleShot(4000, self.close)
+            return
+            
         self.effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.effect)
         
@@ -239,6 +281,10 @@ class Toast(QWidget):
         QTimer.singleShot(4000, self.hide_toast)
 
     def hide_toast(self):
+        if not Animations._is_enabled():
+            self.close()
+            return
+            
         op_anim = QPropertyAnimation(self.effect, b"opacity")
         op_anim.setDuration(500)
         op_anim.setStartValue(1.0)
@@ -263,6 +309,13 @@ class ToastManager:
         t.show_toast(x, y)
 
     @staticmethod
+    def show_warning(parent, message):
+        t = Toast(parent, "⚠️  " + message, "#F59E0B")
+        x = parent.width() // 2 - t.width() // 2
+        y = parent.height() - 150
+        t.show_toast(x, y)
+
+    @staticmethod
     def show_info(parent, message):
         t = Toast(parent, "ℹ️  " + message, "#6366F1")
         x = parent.width() // 2 - t.width() // 2
@@ -274,6 +327,8 @@ class ParticleBackground(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.particles = []
+        if not Animations._is_enabled(): return
+        
         import random
         for _ in range(60):
             self.particles.append({
@@ -301,6 +356,7 @@ class ParticleBackground(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        if not Animations._is_enabled(): return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         for p in self.particles:

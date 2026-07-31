@@ -1,94 +1,11 @@
+from pos_erp.ui.dialogs import ProductForm
+from pos_erp.ui.animations import ToastManager
 from pos_erp.ui.animations import Animations
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QDialog, QFormLayout, QDoubleSpinBox
 )
 from pos_erp.services.product_service import ProductService
-
-class ProductDialog(QDialog):
-    """
-    نافذة حوار منسقة لإضافة أو تعديل منتج تجاري مع كافة التفاصيل (الباركود، SKU، الأسعار، المخزون، الضرائب).
-    """
-    def __init__(self, product=None):
-        super().__init__()
-        self.product = product
-        self.init_ui()
-
-    def init_ui(self):
-        self.setWindowTitle("إدارة بيانات المنتج" if self.product else "إضافة منتج تجاري جديد")
-        self.resize(500, 550)
-        
-        layout = QFormLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.setSpacing(24)
-
-        self.name_input = QLineEdit()
-        self.sku_input = QLineEdit()
-        self.barcode_input = QLineEdit()
-        
-        self.purchase_price = QDoubleSpinBox()
-        self.purchase_price.setMaximum(10000000)
-        self.purchase_price.setDecimals(2)
-        
-        self.selling_price = QDoubleSpinBox()
-        self.selling_price.setMaximum(10000000)
-        self.selling_price.setDecimals(2)
-        
-        self.quantity = QDoubleSpinBox()
-        self.quantity.setMaximum(10000000)
-        self.quantity.setDecimals(2)
-        
-        self.min_stock = QDoubleSpinBox()
-        self.min_stock.setMaximum(1000000)
-        self.min_stock.setValue(5.0)
-
-        self.tax_rate = QDoubleSpinBox()
-        self.tax_rate.setMaximum(100.0)
-        self.tax_rate.setValue(15.0)
-
-        layout.addRow("اسم المنتج:", self.name_input)
-        layout.addRow("رمز المنتج (SKU):", self.sku_input)
-        layout.addRow("الباركود:", self.barcode_input)
-        layout.addRow("سعر الشراء:", self.purchase_price)
-        layout.addRow("سعر البيع:", self.selling_price)
-        layout.addRow("الكمية الأولية:", self.quantity)
-        layout.addRow("الحد الأدنى للتنبيه:", self.min_stock)
-        layout.addRow("نسبة الضريبة (%):", self.tax_rate)
-
-        if self.product:
-            self.name_input.setText(self.product.name)
-            self.sku_input.setText(self.product.sku or "")
-            self.barcode_input.setText(self.product.barcode or "")
-            self.purchase_price.setValue(self.product.purchase_price)
-            self.selling_price.setValue(self.product.selling_price)
-            self.quantity.setValue(self.product.quantity)
-            self.min_stock.setValue(self.product.min_stock)
-            self.tax_rate.setValue(self.product.tax_rate)
-
-        btn_layout = QHBoxLayout()
-        save_btn = QPushButton("💾 حفظ المنتج")
-        save_btn.setProperty("cssClass", "primary")
-        save_btn.clicked.connect(self.accept)
-        
-        cancel_btn = QPushButton("❌ إلغاء")
-        cancel_btn.setProperty("cssClass", "danger")
-        cancel_btn.clicked.connect(self.reject)
-        
-        btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(cancel_btn)
-        layout.addRow(btn_layout)
-
-    def get_data(self):
-        return {
-            'name': self.name_input.text().strip(),
-            'sku': self.sku_input.text().strip() or None,
-            'barcode': self.barcode_input.text().strip() or None,
-            'purchase_price': self.purchase_price.value(),
-            'selling_price': self.selling_price.value(),
-            'quantity': self.quantity.value(),
-            'min_stock': self.min_stock.value(),
-            'tax_rate': self.tax_rate.value()
-        }
 
 class ProductsView(QWidget):
     """
@@ -164,15 +81,18 @@ class ProductsView(QWidget):
         self.populate_table(filtered)
 
     def add_product(self):
-        dialog = ProductDialog()
+        from pos_erp.services.crm_service import CRMService
+        categories = ProductService.get_categories()
+        suppliers = CRMService.get_all_suppliers()
+        dialog = ProductForm(self, product=None, categories=categories, suppliers=suppliers)
         if dialog.exec():
             data = dialog.get_data()
             if not data['name']:
-                QMessageBox.warning(self, "خطأ إدخال", "اسم المنتج مطلوب إجباريأ!")
+                ToastManager.show_warning(self.window(), "اسم المنتج مطلوب إجباريأ!")
                 return
             success, msg = ProductService.add_product(data, self.current_user.id)
             if success:
-                QMessageBox.information(self, "نجاح", msg)
+                ToastManager.show_success(self.window(), msg)
                 self.load_data()
             else:
-                QMessageBox.critical(self, "خطأ", msg)
+                ToastManager.show_error(self.window(), msg)
