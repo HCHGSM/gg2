@@ -12,16 +12,16 @@ class ReportsView(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         title = QLabel("التقارير التحليلية المتقدمة والتصدير")
-        title.setStyleSheet("font-size: 22px; font-weight: 800; color: #1e293b;")
+        title.setProperty("cssClass", "view-title")
         layout.addWidget(title)
 
         btn_layout = QHBoxLayout()
         export_sales_btn = QPushButton("📥 تصدير تقرير المبيعات الشامل (Excel)")
-        export_sales_btn.setProperty("class", "PrimaryButton")
+        export_sales_btn.setProperty("cssClass", "primary")
         export_sales_btn.clicked.connect(self.export_sales)
         btn_layout.addWidget(export_sales_btn)
 

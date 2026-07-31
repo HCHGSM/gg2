@@ -1,3 +1,4 @@
+from pos_erp.ui.animations import Animations
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QMessageBox
 from pos_erp.database.db import SessionLocal
 from pos_erp.database.models import Purchase
@@ -12,17 +13,17 @@ class PurchasesView(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         top_layout = QHBoxLayout()
         title = QLabel("إدارة فواتير المشتريات والتوريد")
-        title.setStyleSheet("font-size: 22px; font-weight: 800; color: #1e293b;")
+        title.setProperty("cssClass", "view-title")
         top_layout.addWidget(title)
         top_layout.addStretch()
 
         add_btn = QPushButton("➕ فاتورة شراء جديدة")
-        add_btn.setProperty("class", "SuccessButton")
+        add_btn.setProperty("cssClass", "success")
         add_btn.clicked.connect(lambda: QMessageBox.information(self, "مشتريات", "إدارة فواتير الشراء مفعلة ومتكاملة."))
         top_layout.addWidget(add_btn)
 
@@ -32,6 +33,15 @@ class PurchasesView(QWidget):
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["رقم الفاتورة", "المورد", "الإجمالي النهائي", "المبلغ المدفوع", "تاريخ العملية"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
         layout.addWidget(self.table)
         
         self.load_data()
@@ -40,6 +50,8 @@ class PurchasesView(QWidget):
         session = SessionLocal()
         try:
             purchases = session.query(Purchase).all()
+            self.table.setRowCount(0)
+        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
             self.table.setRowCount(len(purchases))
             for row, p in enumerate(purchases):
                 self.table.setItem(row, 0, QTableWidgetItem(p.invoice_number))

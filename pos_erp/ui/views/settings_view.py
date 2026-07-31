@@ -12,11 +12,11 @@ class SettingsView(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         title = QLabel("إعدادات النظام والشركة التجارية")
-        title.setStyleSheet("font-size: 22px; font-weight: 800; color: #1e293b;")
+        title.setProperty("cssClass", "view-title")
         layout.addWidget(title)
 
         form_layout = QFormLayout()
@@ -31,7 +31,7 @@ class SettingsView(QWidget):
         layout.addLayout(form_layout)
 
         save_btn = QPushButton("💾 حفظ الإعدادات")
-        save_btn.setProperty("class", "PrimaryButton")
+        save_btn.setProperty("cssClass", "primary")
         save_btn.clicked.connect(self.save_settings)
         layout.addWidget(save_btn)
 

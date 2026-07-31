@@ -1,3 +1,4 @@
+from pos_erp.ui.animations import Animations
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QHeaderView
 from pos_erp.database.db import SessionLocal
 from pos_erp.database.models import User
@@ -12,17 +13,26 @@ class UsersView(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         title = QLabel("إدارة المستخدمين وصلاحيات النظام")
-        title.setStyleSheet("font-size: 22px; font-weight: 800; color: #1e293b;")
+        title.setProperty("cssClass", "view-title")
         layout.addWidget(title)
 
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["اسم المستخدم", "الاسم الكامل", "البريد الإلكتروني", "حالة الحساب", "آخر تسجيل دخول"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
         layout.addWidget(self.table)
         
         self.load_data()
@@ -31,6 +41,8 @@ class UsersView(QWidget):
         session = SessionLocal()
         try:
             users = session.query(User).all()
+            self.table.setRowCount(0)
+        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
             self.table.setRowCount(len(users))
             for row, u in enumerate(users):
                 self.table.setItem(row, 0, QTableWidgetItem(u.username))

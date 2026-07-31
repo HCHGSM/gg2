@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
 import random
 from pos_erp.database.db import SessionLocal
-from pos_erp.database.models import Product, Customer, Supplier, Category, Warehouse, Sale, SaleItem
+from pos_erp.database.models import Product, Supplier, Category
 
 class SeedGenerator:
     """

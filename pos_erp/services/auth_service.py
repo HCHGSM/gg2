@@ -40,7 +40,7 @@ class AuthService:
     def change_password(user_id, old_password, new_password):
         session = SessionLocal()
         try:
-            user = session.query(User).get(user_id)
+            user = session.get(User, user_id)
             if not user:
                 return False, "المستخدم غير موجود"
             if not bcrypt.checkpw(old_password.encode('utf-8'), user.password_hash.encode('utf-8')):

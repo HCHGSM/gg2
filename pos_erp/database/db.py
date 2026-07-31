@@ -1,29 +1,19 @@
 import os
 import sys
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, scoped_session
-from .models import Base, Role, Permission, User, Account, Warehouse, Setting
+from .models import Base, Role, User, Account, Warehouse, Setting
 import bcrypt
 
 
 def _default_app_root():
-    """Where the app's persistent data/ directory should live.
-
-    IMPORTANT: when frozen with PyInstaller (onefile), __file__ resolves
-    inside sys._MEIPASS, a TEMP folder that is deleted when the app exits.
-    Using that for the database would silently wipe all data on every run.
-
-    Also, a Windows install typically lands under "Program Files", which
-    standard (non-admin) users cannot write to — so the DB can't live next
-    to the .exe there either. Use the per-user %LOCALAPPDATA% directory on
-    Windows (always writable, survives reinstalls/updates); on other
-    platforms fall back to next to the executable.
-    """
+    """Where the app's persistent data/ directory should live."""
     if getattr(sys, 'frozen', False):
         local_app_data = os.environ.get('LOCALAPPDATA')
         if local_app_data:
             return os.path.join(local_app_data, 'SmartPOS_ERP')
-        return os.path.dirname(os.path.abspath(sys.executable))
+        # On Linux/Mac frozen
+        return os.path.expanduser('~/.local/share/SmartPOS_ERP')
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -32,10 +22,35 @@ def _default_app_root():
 # when packaged), NOT the user's home directory or the PyInstaller temp dir.
 DEFAULT_DB_PATH = os.path.join(_default_app_root(), 'data', 'pos_erp.db')
 DB_PATH = os.environ.get('POS_ERP_DB_PATH', DEFAULT_DB_PATH)
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+if DB_PATH != ':memory:':
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    DATABASE_URL = f"sqlite:///{DB_PATH}"
+    engine = create_engine(
+        DATABASE_URL, 
+        echo=False, 
+        future=True, 
+        connect_args={'check_same_thread': False, 'timeout': 15}
+    )
+else:
+    DATABASE_URL = "sqlite:///:memory:"
+    engine = create_engine(
+        DATABASE_URL, 
+        echo=False, 
+        future=True, 
+        connect_args={'check_same_thread': False}
+    )
 
-engine = create_engine(DATABASE_URL, echo=False, future=True)
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if DB_PATH != ':memory:':
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA cache_size=-64000")
+        cursor.execute("PRAGMA temp_store=MEMORY")
+        cursor.close()
+
 session_factory = sessionmaker(bind=engine, expire_on_commit=False)
 SessionLocal = scoped_session(session_factory)
 
@@ -76,9 +91,22 @@ def seed_initial_data():
 
         # Check default accounts
         if session.query(Account).count() == 0:
-            main_cash = Account(name='Main Cash Drawer', account_type='CASH', balance=5000.0, account_number='CASH-001')
-            main_bank = Account(name='Company Bank Account', account_type='BANK', balance=50000.0, account_number='BANK-999')
-            session.add_all([main_cash, main_bank])
+            accounts_to_add = [
+                Account(code='1001', name='Main Cash Drawer', account_type='ASSET', balance=5000.0),
+                Account(code='1002', name='Company Bank Account', account_type='ASSET', balance=50000.0),
+                Account(code='1100', name='Accounts Receivable', account_type='ASSET', balance=0.0),
+                Account(code='1200', name='Inventory', account_type='ASSET', balance=0.0),
+                Account(code='2000', name='Accounts Payable', account_type='LIABILITY', balance=0.0),
+                Account(code='2100', name='Tax Payable', account_type='LIABILITY', balance=0.0),
+                Account(code='3000', name='Owner Equity', account_type='EQUITY', balance=0.0),
+                Account(code='3100', name='Retained Earnings', account_type='EQUITY', balance=0.0),
+                Account(code='4000', name='Sales Revenue', account_type='REVENUE', balance=0.0),
+                Account(code='4100', name='Other Revenue', account_type='REVENUE', balance=0.0),
+                Account(code='5000', name='Cost of Goods Sold', account_type='EXPENSE', balance=0.0),
+                Account(code='5100', name='Operating Expenses', account_type='EXPENSE', balance=0.0),
+                Account(code='5200', name='Discounts Given', account_type='EXPENSE', balance=0.0),
+            ]
+            session.add_all(accounts_to_add)
             session.commit()
 
         # Check default warehouse

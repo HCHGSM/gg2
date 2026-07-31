@@ -46,7 +46,7 @@ class ProductService:
     def update_product(product_id, data, user_id=None):
         session = SessionLocal()
         try:
-            product = session.query(Product).get(product_id)
+            product = session.get(Product, product_id)
             if not product:
                 return False, "المنتج غير موجود"
             for key, value in data.items():
@@ -66,7 +66,7 @@ class ProductService:
     def delete_product(product_id, user_id=None):
         session = SessionLocal()
         try:
-            product = session.query(Product).get(product_id)
+            product = session.get(Product, product_id)
             if not product:
                 return False, "المنتج غير موجود"
             session.delete(product)

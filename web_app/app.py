@@ -103,9 +103,21 @@ def get_current_user(request: Request):
         return None
     session = SessionLocal()
     try:
-        return session.query(User).get(entry["user_id"])
+        # Load user and eagerly load role
+        user = session.get(User, entry["user_id"])
+        if user:
+            # detach user from session to use safely, but we need role
+            role_name = user.role.name if user.role else None
+            # Store role_name on the user object for convenience
+            user.role_name = role_name
+        return user
     finally:
         session.close()
+
+def require_role(user: User, allowed_roles: List[str]):
+    if not user or getattr(user, 'role_name', None) not in allowed_roles:
+        return False
+    return True
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
@@ -151,6 +163,8 @@ def dashboard(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/", status_code=303)
+    if not require_role(user, ['Admin', 'Manager']):
+        return RedirectResponse(url="/pos", status_code=303) # Cashiers go to POS
     
     stats = ReportService.get_dashboard_stats()
     recent_sales = SalesService.get_all_sales()[:15]
@@ -166,6 +180,8 @@ def dashboard(request: Request):
 def pos_terminal(request: Request):
     user = get_current_user(request)
     if not user:
+        return RedirectResponse(url="/", status_code=303)
+    if not require_role(user, ['Admin', 'Manager', 'Cashier']):
         return RedirectResponse(url="/", status_code=303)
     
     products = ProductService.get_all_products()
@@ -191,6 +207,8 @@ def api_create_sale(payload: SaleSchema, request: Request):
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
+    if not require_role(user, ['Admin', 'Manager', 'Cashier']):
+        raise HTTPException(status_code=403, detail="Forbidden")
     
     items_dicts = [item.dict() for item in payload.items_data]
     success, invoice_no, msg = SalesService.create_sale(payload.sale_data, items_dicts, user.id)
@@ -199,45 +217,3 @@ def api_create_sale(payload: SaleSchema, request: Request):
     else:
         return {"success": False, "message": msg}
 
-@app.get("/products", response_class=HTMLResponse)
-def products_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    products = ProductService.get_all_products()
-    return templates.TemplateResponse("dashboard.html", {"request": request, "user": user, "stats": ReportService.get_dashboard_stats(), "recent_sales": []})
-
-@app.get("/inventory", response_class=HTMLResponse)
-def inventory_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/dashboard", status_code=303)
-
-@app.get("/customers", response_class=HTMLResponse)
-def customers_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/dashboard", status_code=303)
-
-@app.get("/suppliers", response_class=HTMLResponse)
-def suppliers_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/dashboard", status_code=303)
-
-@app.get("/expenses", response_class=HTMLResponse)
-def expenses_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/dashboard", status_code=303)
-
-@app.get("/reports", response_class=HTMLResponse)
-def reports_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/dashboard", status_code=303)

@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.1.0] - Complete Audit and Fixes (Agent Run)
+
+### Accounting Integrity
+- Fixed Net Profit Calculation: Net profit now properly uses Cost of Goods Sold (COGS) rather than naive total purchases.
+- Added `SaleItem.unit_cost` to reliably lock in the COGS at the time of sale.
+- Implemented `PurchaseService` logic for handling purchases, updating inventory, recalculating moving average cost, and debiting Supplier/Cash accounts.
+- Implemented `SalesService.return_sale()` logic to correctly handle sales returns by returning inventory, refunding cash, and updating logs.
+- Added `get_trial_balance()` and `get_cash_flow()` to `ReportService`.
+
+### Database & Performance
+- Enabled `PRAGMA journal_mode=WAL` for robust concurrent reads/writes and `PRAGMA foreign_keys=ON` in SQLite.
+- Fixed missing index configuration on all SQLAlchemy `ForeignKey` columns to enhance lookup performance on relations.
+- Added `yield_per()` usage in large data exports (e.g. `export_sales_excel`) to prevent out-of-memory errors on massive databases.
+
+### Desktop App
+- Fixed memory leaks in PySide6 `QTableWidget`s by using `setRowCount(0)` before repopulating tables.
+- Added an auto-refresh hook to `switch_view` to prevent stale data when switching between tabs.
+- Added explicit Logout functionality to securely replace the main window session.
+
+### Web App
+- Added Role-Based Access Control (RBAC) via the `require_role` dependency for both UI routes and API endpoints.
+
+### Testing & Docs
+- Developed `test_accounting.py` and `test_system.py` to continuously verify the financial and system integrity.
+- Created `developer_guide.md` and `database_guide.md`.
+
 ## [1.0.0] - Production readiness pass
 
 ### Fixed (crash / correctness)

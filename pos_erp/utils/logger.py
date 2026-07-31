@@ -4,13 +4,11 @@ import sys
 
 
 def _default_app_root():
-    # See pos_erp/database/db.py for the full reasoning (ephemeral temp dir,
-    # and Program Files not being writable by standard users).
     if getattr(sys, 'frozen', False):
         local_app_data = os.environ.get('LOCALAPPDATA')
         if local_app_data:
             return os.path.join(local_app_data, 'SmartPOS_ERP')
-        return os.path.dirname(os.path.abspath(sys.executable))
+        return os.path.expanduser('~/.local/share/SmartPOS_ERP')
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 

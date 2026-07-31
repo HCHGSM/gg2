@@ -34,3 +34,9 @@ dist/
 # Uploaded runtime files (user-generated content, not source)
 uploads/*
 !uploads/.gitkeep
+
+*.xlsx
+*.db-wal
+*.db-shm
+.coverage
+acceptance_pos_erp.db

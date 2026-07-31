@@ -1,136 +1,160 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QFrame, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QMessageBox
-)
-from PySide6.QtCore import Qt, QTimer
+from pos_erp.ui.worker import Worker
+from PySide6.QtCore import QThreadPool
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QFrame, QTableWidget, QTableWidgetItem, QHeaderView, QScrollArea
+from PySide6.QtCore import Qt
 from pos_erp.services.report_service import ReportService
 from pos_erp.services.sales_service import SalesService
+from pos_erp.ui.styles import apply_card_shadow
+from pos_erp.ui.animations import Animations
 
 class DashboardView(QWidget):
-    """
-    لوحة التحكم الرئيسية المتقدمة لعرض مؤشرات الأداء الحية، الإيرادات، الأرباح،
-    تنبيهات المخزون المنخفض، وأحدث العمليات والفواتير.
-    """
     def __init__(self):
         super().__init__()
         self.init_ui()
-        self.load_data()
+
+    def create_kpi_card(self, title, value, icon, color):
+        card = QFrame()
+        card.setObjectName("Card")
+        card.setFixedHeight(140)
+        apply_card_shadow(card)
         
-        # Refresh timer every 30 seconds
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.load_data)
-        self.timer.start(30000)
-
-    def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(20)
-
-        # Header with Refresh button
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
         header_layout = QHBoxLayout()
-        title = QLabel("لوحة التحكم والتحليلات المالية")
-        title.setStyleSheet("font-size: 24px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px;")
-        header_layout.addWidget(title)
+        lbl_title = QLabel(title)
+        lbl_title.setProperty("cssClass", "card-title")
         
+        # Icon inside a colored circular background
+        icon_container = QFrame()
+        icon_container.setFixedSize(48, 48)
+        icon_container.setStyleSheet(f"background-color: {color}20; border-radius: 24px; border: none;") # 20 is hex alpha
+        icon_layout = QVBoxLayout(icon_container)
+        icon_layout.setContentsMargins(0, 0, 0, 0)
+        lbl_icon = QLabel(icon)
+        lbl_icon.setAlignment(Qt.AlignCenter)
+        lbl_icon.setStyleSheet(f"font-size: 22px; color: {color}; background: transparent; border: none;")
+        icon_layout.addWidget(lbl_icon)
+        
+        header_layout.addWidget(lbl_title)
         header_layout.addStretch()
-
-        refresh_btn = QPushButton("تحديث البيانات")
-        refresh_btn.setProperty("class", "PrimaryButton")
-        refresh_btn.clicked.connect(self.load_data)
-        header_layout.addWidget(refresh_btn)
+        header_layout.addWidget(icon_container)
+        
+        lbl_value = QLabel(str(value))
+        lbl_value.setProperty("cssClass", "card-value")
         
         layout.addLayout(header_layout)
-
-        # Statistics Cards Grid (4 columns x 2 rows)
-        grid_layout = QGridLayout()
-        grid_layout.setSpacing(18)
-
-        self.card_sales = self.create_card("إجمالي المبيعات", "0.00 ج.س", "#3b82f6", "📈")
-        self.card_profit = self.create_card("صافي الأرباح", "0.00 ج.س", "#10b981", "💰")
-        self.card_purchases = self.create_card("إجمالي المشتريات", "0.00 ج.س", "#f59e0b", "🛒")
-        self.card_expenses = self.create_card("إجمالي المصروفات", "0.00 ج.س", "#ef4444", "📉")
+        layout.addSpacing(10)
+        layout.addWidget(lbl_value)
+        layout.addStretch()
         
-        self.card_revenues = self.create_card("الإيرادات الأخرى", "0.00 ج.س", "#6366f1", "💵")
-        self.card_customers = self.create_card("إجمالي العملاء", "0", "#ec4899", "👥")
-        self.card_suppliers = self.create_card("إجمالي الموردين", "0", "#14b8a6", "🏭")
-        self.card_low_stock = self.create_card("تنبيهات نقص المخزون", "0", "#f97316", "⚠️")
+        return card, lbl_value
 
-        grid_layout.addWidget(self.card_sales['widget'], 0, 0)
-        grid_layout.addWidget(self.card_profit['widget'], 0, 1)
-        grid_layout.addWidget(self.card_purchases['widget'], 0, 2)
-        grid_layout.addWidget(self.card_expenses['widget'], 0, 3)
+    def init_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("background: transparent;")
+        
+        content = QWidget()
+        content.setStyleSheet("background: transparent;")
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(30)
 
-        grid_layout.addWidget(self.card_revenues['widget'], 1, 0)
-        grid_layout.addWidget(self.card_customers['widget'], 1, 1)
-        grid_layout.addWidget(self.card_suppliers['widget'], 1, 2)
-        grid_layout.addWidget(self.card_low_stock['widget'], 1, 3)
+        title = QLabel("نظرة عامة (Overview)")
+        title.setProperty("cssClass", "view-title")
+        layout.addWidget(title)
 
-        layout.addLayout(grid_layout)
+        # KPI Grid
+        grid = QGridLayout()
+        grid.setSpacing(24)
+        
+        c1, self.lbl_sales = self.create_kpi_card("إجمالي المبيعات", "0.0", "💰", "#10B981")
+        c2, self.lbl_purchases = self.create_kpi_card("إجمالي المشتريات", "0.0", "🛍️", "#F59E0B")
+        c3, self.lbl_profit = self.create_kpi_card("صافي الأرباح", "0.0", "📈", "#6366F1")
+        c4, self.lbl_low_stock = self.create_kpi_card("تنبيهات المخزون", "0", "⚠️", "#EF4444")
+        
+        grid.addWidget(c1, 0, 0)
+        grid.addWidget(c2, 0, 1)
+        grid.addWidget(c3, 0, 2)
+        grid.addWidget(c4, 0, 3)
+        layout.addLayout(grid)
 
-        # Recent Sales Table Section
-        recent_label = QLabel("أحدث الفواتير والمعاملات المسجلة في النظام")
-        recent_label.setStyleSheet("font-size: 18px; font-weight: 700; margin-top: 15px; color: #334155;")
-        layout.addWidget(recent_label)
+        # Recent Sales Table
+        table_frame = QFrame()
+        table_frame.setObjectName("Card")
+        apply_card_shadow(table_frame)
+        table_layout = QVBoxLayout(table_frame)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(0)
+        
+        header_area = QWidget()
+        header_area.setStyleSheet("background: transparent;")
+        header_area_layout = QHBoxLayout(header_area)
+        header_area_layout.setContentsMargins(24, 24, 24, 16)
+        
+        lbl_recent = QLabel("أحدث المبيعات المكتملة")
+        lbl_recent.setProperty("cssClass", "card-title")
+        lbl_recent.setStyleSheet("font-size: 18px; font-weight: 800; color: #F4F4F5;") # Will adapt depending on theme if we use generic class, but let's keep it bold
+        header_area_layout.addWidget(lbl_recent)
+        table_layout.addWidget(header_area)
 
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["رقم الفاتورة", "العميل", "الإجمالي النهائي", "المبلغ المدفوع", "طريقة الدفع", "وقت العملية"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["رقم الفاتورة", "العميل", "الإجمالي", "المدفوع", "الحالة"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setStyleSheet("border-radius: 8px; font-size: 13px;")
-        layout.addWidget(self.table)
-
-    def create_card(self, title, value, color, icon):
-        frame = QFrame()
-        frame.setProperty("class", "Card")
-        frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: #ffffff;
-                border-left: 6px solid {color};
-                border-radius: 10px;
-                border-top: 1px solid #e2e8f0;
-                border-right: 1px solid #e2e8f0;
-                border-bottom: 1px solid #e2e8f0;
-                padding: 15px;
-            }}
-        """)
-        v_layout = QVBoxLayout(frame)
-        v_layout.setContentsMargins(10, 5, 10, 5)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setStyleSheet("border: none; border-radius: 0px;") # remove internal border inside card
         
-        top_row = QHBoxLayout()
-        t_label = QLabel(title)
-        t_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 700;")
-        top_row.addWidget(t_label)
+        table_layout.addWidget(self.table)
+        layout.addWidget(table_frame)
+
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
         
-        icon_lbl = QLabel(icon)
-        icon_lbl.setStyleSheet("font-size: 18px;")
-        top_row.addWidget(icon_lbl, alignment=Qt.AlignRight)
-        v_layout.addLayout(top_row)
-
-        v_val_label = QLabel(value)
-        v_val_label.setStyleSheet(f"color: {color}; font-size: 22px; font-weight: 800; margin-top: 5px;")
-        v_layout.addWidget(v_val_label)
-
-        return {'widget': frame, 'value_label': v_val_label}
+        self.load_data()
 
     def load_data(self):
-        try:
-            stats = ReportService.get_dashboard_stats()
-            self.card_sales['value_label'].setText(f"{stats['total_sales']:,.2f} ج.س")
-            self.card_profit['value_label'].setText(f"{stats['net_profit']:,.2f} ج.س")
-            self.card_purchases['value_label'].setText(f"{stats['total_purchases']:,.2f} ج.س")
-            self.card_expenses['value_label'].setText(f"{stats['total_expenses']:,.2f} ج.س")
-            self.card_revenues['value_label'].setText(f"{stats['total_revenues']:,.2f} ج.س")
-            self.card_customers['value_label'].setText(str(stats['customers_count']))
-            self.card_suppliers['value_label'].setText(str(stats['suppliers_count']))
-            self.card_low_stock['value_label'].setText(str(stats['low_stock_count']))
+        def task():
+            return ReportService.get_dashboard_stats(), SalesService.get_all_sales()[:10]
+            
+        worker = Worker(task)
+        worker.signals.result.connect(self._on_data_loaded)
+        QThreadPool.globalInstance().start(worker)
 
-            sales = SalesService.get_all_sales()[:12] # Recent 12
-            self.table.setRowCount(len(sales))
-            for row, s in enumerate(sales):
-                self.table.setItem(row, 0, QTableWidgetItem(s.invoice_number))
-                self.table.setItem(row, 1, QTableWidgetItem(str(s.customer_id or "عميل نقدي افتراضي")))
-                self.table.setItem(row, 2, QTableWidgetItem(f"{s.total:,.2f} ج.س"))
-                self.table.setItem(row, 3, QTableWidgetItem(f"{s.paid_amount:,.2f} ج.س"))
-                self.table.setItem(row, 4, QTableWidgetItem(s.payment_method))
-                self.table.setItem(row, 5, QTableWidgetItem(str(s.created_at)))
-        except Exception as e:
-            print(f"Dashboard load error: {e}")
+    def _on_data_loaded(self, result):
+        stats, sales = result
+        # Animated counters
+        Animations.count_number(self.lbl_sales, 0, stats['total_sales'], True, duration=1000)
+        Animations.count_number(self.lbl_purchases, 0, stats['total_purchases'], True, duration=1000)
+        Animations.count_number(self.lbl_profit, 0, stats['net_profit'], True, duration=1000)
+        Animations.count_number(self.lbl_low_stock, 0, stats['low_stock_count'], False, duration=1000)
+        
+        # Pop in cards
+        Animations.pop_in(self.lbl_sales.parentWidget(), 500, 0)
+        Animations.pop_in(self.lbl_purchases.parentWidget(), 500, 100)
+        Animations.pop_in(self.lbl_profit.parentWidget(), 500, 200)
+        Animations.pop_in(self.lbl_low_stock.parentWidget(), 500, 300)
+
+        self.table.setRowCount(0)
+        self.table.setRowCount(len(sales))
+        for row, s in enumerate(sales):
+            self.table.setItem(row, 0, QTableWidgetItem(s.invoice_number))
+            self.table.setItem(row, 1, QTableWidgetItem(str(s.customer_id or "عميل نقدي")))
+            self.table.setItem(row, 2, QTableWidgetItem(f"{s.total:,.2f}"))
+            self.table.setItem(row, 3, QTableWidgetItem(f"{s.paid_amount:,.2f}"))
+            
+            # Status Badge simulation
+            status_item = QTableWidgetItem(s.status)
+            status_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row, 4, status_item)
+            
+        Animations.pop_in(self.table.parentWidget(), 500, 400)

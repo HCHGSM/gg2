@@ -23,7 +23,7 @@ def build_executable():
     if result.returncode == 0:
         print("\n" + "=" * 60)
         print("تم بناء البرنامج بنجاح!")
-        print("الملف التنفيذي جاهز في مجلد: dist/SmartPOS_ERP" + (".exe" if platform.system() == "Windows" else ""))
+        print("الملف التنفيذي جاهز في مجلد: dist/ERP" + (".exe" if platform.system() == "Windows" else ""))
         print("=" * 60)
     else:
         print("\nحدث خطأ أثناء بناء البرنامج. راجع الرسائل أعلاه لتفاصيل الخطأ.")

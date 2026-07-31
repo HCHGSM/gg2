@@ -1,8 +1,8 @@
+from pos_erp.ui.animations import Animations
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QDialog, QFormLayout, QDoubleSpinBox, QSpinBox, QComboBox, QTextEdit
+    QHeaderView, QMessageBox, QDialog, QFormLayout, QDoubleSpinBox
 )
-from PySide6.QtCore import Qt
 from pos_erp.services.product_service import ProductService
 
 class ProductDialog(QDialog):
@@ -19,8 +19,8 @@ class ProductDialog(QDialog):
         self.resize(500, 550)
         
         layout = QFormLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         self.name_input = QLineEdit()
         self.sku_input = QLineEdit()
@@ -67,11 +67,11 @@ class ProductDialog(QDialog):
 
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("💾 حفظ المنتج")
-        save_btn.setProperty("class", "PrimaryButton")
+        save_btn.setProperty("cssClass", "primary")
         save_btn.clicked.connect(self.accept)
         
         cancel_btn = QPushButton("❌ إلغاء")
-        cancel_btn.setProperty("class", "DangerButton")
+        cancel_btn.setProperty("cssClass", "danger")
         cancel_btn.clicked.connect(self.reject)
         
         btn_layout.addWidget(save_btn)
@@ -102,12 +102,12 @@ class ProductsView(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
-        layout.setSpacing(15)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(24)
 
         top_layout = QHBoxLayout()
         title = QLabel("إدارة المخزون والمنتجات التجارية")
-        title.setStyleSheet("font-size: 22px; font-weight: 800; color: #1e293b;")
+        title.setProperty("cssClass", "view-title")
         top_layout.addWidget(title)
 
         top_layout.addStretch()
@@ -120,7 +120,7 @@ class ProductsView(QWidget):
         top_layout.addWidget(self.search_input)
 
         add_btn = QPushButton("➕ إضافة منتج جديد")
-        add_btn.setProperty("class", "SuccessButton")
+        add_btn.setProperty("cssClass", "success")
         add_btn.clicked.connect(self.add_product)
         top_layout.addWidget(add_btn)
 
@@ -130,6 +130,15 @@ class ProductsView(QWidget):
         self.table.setColumnCount(8)
         self.table.setHorizontalHeaderLabels(["المعرف", "اسم المنتج", "SKU", "الباركود", "سعر الشراء", "سعر البيع", "الكمية المتاحة", "الضريبة"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
         layout.addWidget(self.table)
 
     def load_data(self):
@@ -137,6 +146,8 @@ class ProductsView(QWidget):
         self.populate_table(self.products)
 
     def populate_table(self, products):
+        self.table.setRowCount(0)
+        Animations.pop_in(self.table, 500) # Clear previous rows to prevent leaks
         self.table.setRowCount(len(products))
         for row, p in enumerate(products):
             self.table.setItem(row, 0, QTableWidgetItem(str(p.id)))

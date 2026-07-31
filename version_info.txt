@@ -22,9 +22,9 @@ VSVersionInfo(
         [StringStruct(u'CompanyName', u'Your Company Name'),
         StringStruct(u'FileDescription', u'Smart POS & ERP - Enterprise Point of Sale System'),
         StringStruct(u'FileVersion', u'1.0.0.0'),
-        StringStruct(u'InternalName', u'SmartPOS_ERP'),
+        StringStruct(u'InternalName', u'ERP'),
         StringStruct(u'LegalCopyright', u'Copyright (c) 2026'),
-        StringStruct(u'OriginalFilename', u'SmartPOS_ERP.exe'),
+        StringStruct(u'OriginalFilename', u'ERP.exe'),
         StringStruct(u'ProductName', u'Smart POS & ERP'),
         StringStruct(u'ProductVersion', u'1.0.0.0')])
       ]),

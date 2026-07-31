@@ -9,7 +9,7 @@
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "Your Company Name"
 #define MyAppURL "https://example.com"
-#define MyAppExeName "SmartPOS_ERP.exe"
+#define MyAppExeName "ERP.exe"
 
 [Setup]
 AppId={{8F2C6C6E-9C1A-4C9E-9B7B-4E1F6A2B0A11}
