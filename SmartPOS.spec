@@ -4,11 +4,17 @@
 
 block_cipher = None
 
+# Bundle the app icon (and any future assets under assets/) so it's available
+# at runtime from the frozen exe, not just for the exe's own icon resource.
+added_datas = [
+    ('assets', 'assets'),
+]
+
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=added_datas,
     hiddenimports=['bcrypt', 'sqlite3'],
     hookspath=[],
     hooksconfig={},
@@ -35,10 +41,12 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,               # windowed mode, no console popup
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='assets/icons/app_icon.ico',
+    version='version_info.txt',
 )

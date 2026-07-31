@@ -21,8 +21,8 @@ def validate_phone(phone_str):
     cleaned = ''.join(filter(str.isdigit, phone_str))
     return len(cleaned) >= 7
 
-def sanitize_input(text):
-    """Sanitize text input against basic injection vulnerabilities."""
-    if not text:
-        return ""
-    return str(text).strip().replace("'", "").replace(";", "")
+# NOTE: no manual "sanitize_input" helper here on purpose. SQL injection
+# protection already comes from SQLAlchemy's parameterized queries (used
+# throughout pos_erp/services/*) — a blacklist-based string sanitizer would
+# both fail to add real protection and corrupt legitimate input (e.g. an
+# apostrophe in a customer name like "O'Brien").

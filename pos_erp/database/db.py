@@ -1,14 +1,36 @@
 import os
+import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from .models import Base, Role, Permission, User, Account, Warehouse, Setting
 import bcrypt
 
+
+def _default_app_root():
+    """Where the app's persistent data/ directory should live.
+
+    IMPORTANT: when frozen with PyInstaller (onefile), __file__ resolves
+    inside sys._MEIPASS, a TEMP folder that is deleted when the app exits.
+    Using that for the database would silently wipe all data on every run.
+
+    Also, a Windows install typically lands under "Program Files", which
+    standard (non-admin) users cannot write to — so the DB can't live next
+    to the .exe there either. Use the per-user %LOCALAPPDATA% directory on
+    Windows (always writable, survives reinstalls/updates); on other
+    platforms fall back to next to the executable.
+    """
+    if getattr(sys, 'frozen', False):
+        local_app_data = os.environ.get('LOCALAPPDATA')
+        if local_app_data:
+            return os.path.join(local_app_data, 'SmartPOS_ERP')
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
 # DB location is configurable via POS_ERP_DB_PATH (useful for tests / packaging).
-# Default: a project-local data/ directory, NOT the user's home directory, so the
-# database file is always where a developer inspecting the repo expects it to be.
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DEFAULT_DB_PATH = os.path.join(PROJECT_ROOT, 'data', 'pos_erp.db')
+# Default: a data/ directory next to the app (source root, or next to the .exe
+# when packaged), NOT the user's home directory or the PyInstaller temp dir.
+DEFAULT_DB_PATH = os.path.join(_default_app_root(), 'data', 'pos_erp.db')
 DB_PATH = os.environ.get('POS_ERP_DB_PATH', DEFAULT_DB_PATH)
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 DATABASE_URL = f"sqlite:///{DB_PATH}"

@@ -1,7 +1,25 @@
 import logging
 import os
+import sys
 
-LOG_PATH = os.path.expanduser('~/pos_erp.log')
+
+def _default_app_root():
+    # See pos_erp/database/db.py for the full reasoning (ephemeral temp dir,
+    # and Program Files not being writable by standard users).
+    if getattr(sys, 'frozen', False):
+        local_app_data = os.environ.get('LOCALAPPDATA')
+        if local_app_data:
+            return os.path.join(local_app_data, 'SmartPOS_ERP')
+        return os.path.dirname(os.path.abspath(sys.executable))
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+# Same reasoning as pos_erp/database/db.py: default to a location next to the
+# app instead of silently writing to the user's home directory or a temp dir.
+# Overridable via POS_ERP_LOG_PATH.
+DEFAULT_LOG_PATH = os.path.join(_default_app_root(), 'data', 'pos_erp.log')
+LOG_PATH = os.environ.get('POS_ERP_LOG_PATH', DEFAULT_LOG_PATH)
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
 logging.basicConfig(
     filename=LOG_PATH,
